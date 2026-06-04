@@ -92,6 +92,8 @@ If something looks wrong:
 - Help revise the Markdown.
 - Do not code yet.
 
+When multiple issues are found, prefer one holistic review response instead of drip-feeding questions one by one, unless the author explicitly asks for step-by-step questioning. Do not output a bare checklist. Each issue must include the questionable mapping, your design concern or defect hypothesis, your proposed interpretation, and the exact confirmation needed from the author.
+
 If the document contains anything not clearly covered by the current QiuZhang example document/code or this checklist, treat it as ambiguous. Ask the author how it should map into the 1v1 model before editing code.
 
 Obvious typo or internal contradiction? Propose a concrete Markdown correction and still report it.
@@ -144,6 +146,8 @@ Preserve `NumericalPet.cs` unless the confirmed design requires an algorithm-wid
 
 - Required per-hero fields: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, `ShortPhysicalDamage`, `ShortSpellDamage`, `ShortTrueDamage`, `LongPhysicalDamagePerSecond`, `LongSpellDamagePerSecond`, `EffectiveCombatReach`.
 - Use live battle properties for global multipliers and reductions, such as extra damage and damage-taken rate.
+- `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are project-convention names for basic-attack-specific and skill-specific damage additions. Do not flag them as duplicate with shared `ExtraDamageFactor` unless the author explicitly says they are global damage multipliers.
+- For any formula using basic attacks, require a fixed authored `BaseAttackFrequency` parameter and the runtime attack-speed coefficient. Compute attacks per second as `1 / (BaseAttackFrequency / AttackSpeed)`. If a document uses basic attacks without this parameter, ask the author to supply it before code generation.
 - Cooldown gates such as "usable or CD within 2 seconds" use the project's current ability cooldown API and the QiuZhang example as precedent.
 - Formula placeholders such as `lv1`, `lv2`, and `lv3` usually mean the current level of that skill unless the confirmed Markdown says otherwise.
 - Short true damage remains separate and does not receive physical/spell extra-damage multipliers unless the design explicitly changes that rule.

@@ -20,6 +20,11 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by the current QiuZhang example document/code, ask the author for design intent before coding
   - do not invent a 1v1 mapping for new mechanics, support effects, healing, immunity, cleanse, aura, terrain, conditional control, resource loops, summons, or ally-dependent behavior unless the author confirms the mapping in Markdown
   - when in doubt, update the Markdown with the confirmed interpretation before implementation
+- Review-question style:
+  - when multiple review issues exist, present them together in one structured review by default; switch to one-by-one questioning only if the author asks for it
+  - do not simply list variable names or checklist failures
+  - for each issue, include the questionable mapping, why it may be a design defect or incomplete abstraction, the assistant's proposed interpretation, and the confirmation needed from the author
+  - after the author answers, fold the confirmed decisions back into the Markdown before code generation
 - Combat-attribute flow:
   - one evaluated hero maps to one class under `RobotCombatAttributes/RobotHero/`
   - each hero class inherits `RobotCombatAttributesBase`
@@ -35,6 +40,14 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - follow the current QiuZhang implementation as precedent for skill level and cooldown access
   - current QiuZhang code reads skill level from `skill.Level`
   - current QiuZhang code treats a skill as usable for combat evaluation when `skill.CurCdTime < 2`
+- Damage-addition conventions:
+  - `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are basic-attack-specific and skill-specific additions by project convention
+  - do not raise a duplicate-multiplier concern against shared `ExtraDamageFactor` for these names unless the author explicitly describes them as global damage multipliers
+- Basic-attack frequency conventions:
+  - formulas that include normal/basic attacks should use an authored fixed `BaseAttackFrequency` parameter
+  - runtime attack speed is a coefficient
+  - attacks per second must be computed as `1 / (BaseAttackFrequency / AttackSpeed)`
+  - if a document includes basic attacks but omits `BaseAttackFrequency`, ask the author to provide it before code generation
 - Base combat-attribute values:
   - `RobotCombatAttributesBase` reads `TotalWeaponDamage` from `MODIFIER_PROPERTY_TOTAL_WEAPON_DAMAGE`
   - its protected `AttackSpeed` field is the attack interval, computed as `1 / attackSpeed`
