@@ -10,6 +10,12 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - do not verify supplied descriptions or numbers against project configs, ability tables, hero UI descriptions, or current implementation unless the user explicitly asks for that validation
   - review only whether the author's combat-evaluation derivations from those supplied descriptions are reasonable, complete, and unambiguous
   - use project code lookup for implementation mechanics only: hero enum names, ability constants, talent unlock APIs, modifier property APIs, factory registration, and shared algorithm conventions
+- Markdown normalization:
+  - generated Markdown must be discussion-ready before it is presented to the author; raw DOCX extraction or pasted-text dumps are not acceptable review documents
+  - apply non-semantic formatting only: headings, stable section grouping, bullets, variable/code formatting, and formula readability cleanup
+  - preserve supplied descriptions, numeric values, formulas, and design intent; do not silently rewrite combat logic while formatting
+  - recommended section order: title/source note, base variables, short output, long output, skill/talent contribution, ignored effects, open questions
+  - place loose `null` placeholders or unexplained ignored effects under an explicit ignored/unclear section so they can be discussed
 - Ambiguity handling:
   - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by the current QiuZhang example document/code, ask the author for design intent before coding
   - do not invent a 1v1 mapping for new mechanics, support effects, healing, immunity, cleanse, aura, terrain, conditional control, resource loops, summons, or ally-dependent behavior unless the author confirms the mapping in Markdown

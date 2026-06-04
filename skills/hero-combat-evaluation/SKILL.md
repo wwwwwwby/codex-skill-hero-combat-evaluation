@@ -13,6 +13,8 @@ Turn a hero combat-power document into FlamonMoba enemy 1v1 收益/强敌 evalua
 
 **Review boundary:** Trust the skill/talent descriptions and numeric values supplied in the document. Do not verify them against project configs by default; review only whether the author's combat-evaluation derivations from those descriptions are reasonable, complete, and unambiguous.
 
+**Markdown quality bar:** Any generated Markdown must be cleaned into a readable, discussion-ready working draft before presenting it to the author. Do not show raw DOCX extraction or pasted-text dumps as the review document.
+
 ## When To Use
 
 Use when the user provides or references:
@@ -35,7 +37,7 @@ If the document is not confirmed, stop at document review. Do not generate code,
 
 Before writing or changing hero combat-evaluation code:
 
-1. **Normalize:** If the source is not Markdown, create a separate Markdown working document.
+1. **Normalize:** If the source is not Markdown, create a separate Markdown working document and apply non-semantic formatting cleanup before presenting it.
 2. **Review:** Check the author's variable derivations against the document's own skill/talent descriptions. Treat those descriptions and numbers as correct input.
 3. **Clarify:** For every unreasonable, ambiguous, or not-covered-by-example derivation, ask the author to confirm intent and help revise the Markdown.
 4. **Confirm:** Get explicit author confirmation that the final Markdown is correct.
@@ -52,6 +54,12 @@ Skip any gate = stop. Ask the author.
 - Accept direct copy-pasted document text as a valid source; do not require a file upload.
 - If the source is `.docx` or another non-Markdown format, extract it and create a Markdown copy for discussion and future edits.
 - If the source is pasted text, create or maintain a Markdown working draft from that pasted content before review. Infer a reasonable file name from the hero name when obvious; ask only if the file destination is necessary and cannot be inferred.
+- Before presenting the Markdown for discussion, perform non-semantic cleanup:
+  - add a clear title and source note
+  - group content into stable sections such as base variables, short output, long output, skill/talent contribution, ignored effects, and open questions
+  - use Markdown headings, bullets, and formula blocks/inline code so variables and formulas are easy to scan
+  - preserve the supplied descriptions, numeric values, formulas, and design intent; do not change meaning during formatting
+  - if raw text contains placeholders such as `null`, keep the evidence but place it under an explicit ignored/unclear section instead of leaving it as an unexplained loose line
 - Keep the original file as evidence; use the Markdown copy as the editable working document.
 - Do not check project configs or ability/talent tables to validate the document's skill descriptions or numeric values unless the user explicitly asks.
 - Locate supporting code only for implementation mechanics: hero enum names, ability constants, talent unlock APIs, modifier property APIs, factory pattern, and existing hero-specific combat-attribute code if present.
@@ -121,8 +129,9 @@ Preserve `NumericalPet.cs` unless the confirmed design requires an algorithm-wid
 
 | Situation | Action |
 |----------|--------|
-| Source document is `.docx` | Extract and create Markdown working copy |
-| Source is pasted document text | Normalize it into a Markdown working draft; do not reject it for lacking a file |
+| Source document is `.docx` | Extract and create discussion-ready Markdown working copy; do not present raw extraction |
+| Source is pasted document text | Normalize it into a discussion-ready Markdown working draft; do not reject it for lacking a file |
+| Raw document has loose paragraphs, repeated labels, or `null` placeholders | Reorganize non-semantically into sections before review |
 | Supplied skill/talent description or number differs from project config | Ignore by default; trust the supplied document unless the user explicitly asks for config validation |
 | Variable derivation is unclear | Ask author; revise Markdown; do not code |
 | Mechanic not present in QiuZhang example/checklist | Ask author for intended 1v1 mapping |
@@ -150,6 +159,7 @@ These are not review findings:
 ## Red Flags - Stop
 
 - "The document is close enough; I'll code it first."
+- "I'll show the raw DOCX extraction first and organize it later."
 - "I'll verify these skill numbers in project configs before reviewing the author's formula."
 - "I'll infer this talent mapping in code."
 - "The QiuZhang example does not cover this mechanic, but I can map it myself."
