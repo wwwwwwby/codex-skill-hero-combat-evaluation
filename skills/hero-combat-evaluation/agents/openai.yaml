@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hero Combat Evaluation"
+  short_description: "Review confirmed hero docs before FlamonMoba 1v1 code"
+  default_prompt: "Use $hero-combat-evaluation to review this hero combat-power document and prepare confirmed Markdown before code generation."
