@@ -4,8 +4,14 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
 
 ## Project Flow Invariants
 
+- Document trust boundary:
+  - direct copy-pasted hero combat-evaluation documents are valid inputs; normalize pasted text into a Markdown working draft before review when needed
+  - treat the skill/talent descriptions and numeric values supplied in the document as correct input
+  - do not verify supplied descriptions or numbers against project configs, ability tables, hero UI descriptions, or current implementation unless the user explicitly asks for that validation
+  - review only whether the author's combat-evaluation derivations from those supplied descriptions are reasonable, complete, and unambiguous
+  - use project code lookup for implementation mechanics only: hero enum names, ability constants, talent unlock APIs, modifier property APIs, factory registration, and shared algorithm conventions
 - Ambiguity handling:
-  - if the document contains unclear value derivations, unclear ignored effects, or mechanics not covered by the current QiuZhang example document/code, ask the author for design intent before coding
+  - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by the current QiuZhang example document/code, ask the author for design intent before coding
   - do not invent a 1v1 mapping for new mechanics, support effects, healing, immunity, cleanse, aura, terrain, conditional control, resource loops, summons, or ally-dependent behavior unless the author confirms the mapping in Markdown
   - when in doubt, update the Markdown with the confirmed interpretation before implementation
 - Combat-attribute flow:

@@ -1,6 +1,6 @@
 ---
 name: hero-combat-evaluation
-description: Use when the user provides a FlamonMoba hero combat-power evaluation document, .docx/.md 英雄战力评估, enemy 1v1 收益/强敌 design notes, or asks to audit skill/talent combat variables or generate RobotCombatAttributesBase code.
+description: Use when the user provides a FlamonMoba hero combat-power evaluation document, pasted hero design text, .docx/.md 英雄战力评估, enemy 1v1 收益/强敌 design notes, or asks to audit skill/talent combat variables or generate RobotCombatAttributesBase code.
 ---
 
 # Hero Combat Evaluation
@@ -11,11 +11,13 @@ Turn a hero combat-power document into FlamonMoba enemy 1v1 收益/强敌 evalua
 
 **Core principle:** Confirm the design document before generating code. The confirmed Markdown is the source of truth.
 
+**Review boundary:** Trust the skill/talent descriptions and numeric values supplied in the document. Do not verify them against project configs by default; review only whether the author's combat-evaluation derivations from those descriptions are reasonable, complete, and unambiguous.
+
 ## When To Use
 
 Use when the user provides or references:
 - A hero 战力评估逻辑 document
-- A `.docx`, `.md`, or pasted design for enemy 1v1 收益/强敌 calculation
+- A `.docx`, `.md`, or directly pasted document/design for enemy 1v1 收益/强敌 calculation
 - Skill/talent descriptions that need conversion into combat-evaluation variables
 - A request to generate `RobotCombatAttributesBase` code for a hero
 
@@ -34,7 +36,7 @@ If the document is not confirmed, stop at document review. Do not generate code,
 Before writing or changing hero combat-evaluation code:
 
 1. **Normalize:** If the source is not Markdown, create a separate Markdown working document.
-2. **Review:** Check the author's variable derivations against the document's own skill/talent descriptions.
+2. **Review:** Check the author's variable derivations against the document's own skill/talent descriptions. Treat those descriptions and numbers as correct input.
 3. **Clarify:** For every unreasonable, ambiguous, or not-covered-by-example derivation, ask the author to confirm intent and help revise the Markdown.
 4. **Confirm:** Get explicit author confirmation that the final Markdown is correct.
 5. **Generate:** Implement exactly what the confirmed Markdown says.
@@ -47,14 +49,19 @@ Skip any gate = stop. Ask the author.
 
 - Read the full hero 战力评估逻辑 document.
 - Understand that the document exists to support the new enemy 1v1 收益/强敌 calculation.
+- Accept direct copy-pasted document text as a valid source; do not require a file upload.
 - If the source is `.docx` or another non-Markdown format, extract it and create a Markdown copy for discussion and future edits.
+- If the source is pasted text, create or maintain a Markdown working draft from that pasted content before review. Infer a reasonable file name from the hero name when obvious; ask only if the file destination is necessary and cannot be inferred.
 - Keep the original file as evidence; use the Markdown copy as the editable working document.
-- Locate supporting code evidence: hero enum, ability constants, talent IDs, ability configs, modifier code, and existing hero-specific combat-attribute code if present.
+- Do not check project configs or ability/talent tables to validate the document's skill descriptions or numeric values unless the user explicitly asks.
+- Locate supporting code only for implementation mechanics: hero enum names, ability constants, talent unlock APIs, modifier property APIs, factory pattern, and existing hero-specific combat-attribute code if present.
 - Load `references/flamonmoba-1v1-checklist.md`.
 
 ### Step 2: Review Before Coding
 
-Treat the document's skill and talent descriptions as the design baseline.
+Treat the document's skill and talent descriptions as the design baseline. Assume the descriptions and their numeric values are correct.
+
+Do not review whether the supplied description numbers match project config, skill UI, code, or tables. Review whether the authored combat-evaluation logic maps those supplied descriptions into the 1v1 model in a reasonable way.
 
 Review these fields and derivations:
 - `CombatRange`
@@ -72,7 +79,7 @@ Review these fields and derivations:
 
 If something looks wrong:
 - List each issue separately.
-- State why it is questionable using document/code evidence.
+- State why it is questionable using the document's own descriptions, the shared 1v1 model, or the current QiuZhang implementation pattern.
 - Ask the author to confirm design intent.
 - Help revise the Markdown.
 - Do not code yet.
@@ -115,6 +122,8 @@ Preserve `NumericalPet.cs` unless the confirmed design requires an algorithm-wid
 | Situation | Action |
 |----------|--------|
 | Source document is `.docx` | Extract and create Markdown working copy |
+| Source is pasted document text | Normalize it into a Markdown working draft; do not reject it for lacking a file |
+| Supplied skill/talent description or number differs from project config | Ignore by default; trust the supplied document unless the user explicitly asks for config validation |
 | Variable derivation is unclear | Ask author; revise Markdown; do not code |
 | Mechanic not present in QiuZhang example/checklist | Ask author for intended 1v1 mapping |
 | Markdown not confirmed | Stop before code generation |
@@ -141,6 +150,7 @@ These are not review findings:
 ## Red Flags - Stop
 
 - "The document is close enough; I'll code it first."
+- "I'll verify these skill numbers in project configs before reviewing the author's formula."
 - "I'll infer this talent mapping in code."
 - "The QiuZhang example does not cover this mechanic, but I can map it myself."
 - "This is probably what the author meant."

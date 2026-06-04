@@ -27,6 +27,8 @@ python <CODEX_HOME>/skills/.system/skill-installer/scripts/install-skill-from-gi
 使用 $hero-combat-evaluation 审阅这份英雄战力评估文档，先整理并确认 Markdown，再生成代码。
 ```
 
+可以上传 `.docx` / `.md`，也可以直接把文档内容复制粘贴给 Codex。默认信任文档中的技能/天赋描述和数值，不要求 Codex 去项目配置里复核；Codex 只审阅撰写者基于这些描述设计出的战力评估变量和公式是否合理。
+
 ## Contents
 
 - `skills/hero-combat-evaluation/SKILL.md`
