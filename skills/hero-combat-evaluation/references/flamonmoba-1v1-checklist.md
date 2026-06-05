@@ -12,12 +12,13 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - use project code lookup for implementation mechanics only: hero enum names, ability constants, talent unlock APIs, modifier property APIs, factory registration, and shared algorithm conventions
 - Markdown normalization:
   - generated Markdown must be discussion-ready before it is presented to the author; raw DOCX extraction or pasted-text dumps are not acceptable review documents
+  - store FlamonMoba hero combat-evaluation Markdown under `D:\work\Flamonmoba\CYTXDocuments\AIdocs` unless the user gives another destination
   - apply non-semantic formatting only: headings, stable section grouping, bullets, variable/code formatting, and formula readability cleanup
   - preserve supplied descriptions, numeric values, formulas, and design intent; do not silently rewrite combat logic while formatting
   - recommended section order: title/source note, base variables, short output, long output, skill/talent contribution, ignored effects, open questions
   - place loose `null` placeholders or unexplained ignored effects under an explicit ignored/unclear section so they can be discussed
 - Ambiguity handling:
-  - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by the current QiuZhang example document/code, ask the author for design intent before coding
+  - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by current registered hero examples or this checklist, ask the author for design intent before coding
   - do not invent a 1v1 mapping for new mechanics, support effects, healing, immunity, cleanse, aura, terrain, conditional control, resource loops, summons, or ally-dependent behavior unless the author confirms the mapping in Markdown
   - when in doubt, update the Markdown with the confirmed interpretation before implementation
 - Review-question style:
@@ -28,30 +29,43 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
 - Combat-attribute flow:
   - one evaluated hero maps to one class under `RobotCombatAttributes/RobotHero/`
   - each hero class inherits `RobotCombatAttributesBase`
+  - current registered hero classes use the `*RobotCombatAttributes` suffix, not `*RobotCombatAttributesBase`; copy the current local naming convention before adding a class or factory case
   - each hero class calls `base.UpdateRobotCombatAttributes()` before assigning hero-specific values
   - each hero class assigns only that hero's combat-evaluation values: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, short damage, long DPS, true damage, and `EffectiveCombatReach`
+  - before generating code, inspect the current local `RobotCombatAttributesBase`, `IRobotCombatAttributes`, factory, and at least two registered hero classes; match their exact class naming, method signature, and refresh flow
+  - current local structure uses `UpdateRobotCombatAttributes()` for target-independent values and `UpdateRobotCombatAttributesWithEnemy(Player enemy)` for values that need a specific enemy
+  - do not introduce a target-parameter overload such as `UpdateRobotCombatAttributes(Player enemy = null)`; use the separate `UpdateRobotCombatAttributesWithEnemy` interface instead
+  - if a confirmed formula needs target-specific values such as enemy current HP, enemy shield, enemy resistance, or target buff stacks, implement or update `UpdateRobotCombatAttributesWithEnemy(Player enemy)` instead of dropping the term
+  - `CalcEnemyWealth` must refresh target-specific attributes for both sides before comparing damage: self with enemy, and enemy with self
+  - for a new hero, keep repository edits scoped to the hero class, the hero class `.meta`, the factory case, and optional confirmed Markdown under `CYTXDocuments/AIdocs`; do not edit existing hero classes for style or precedent cleanup unless the user requested a shared-base change
+  - when adding any file or directory under `Assets`, include the corresponding Unity `.meta` file
   - `RobotCombatAttributesBaseFactory.CreateRobotCombatAttributes` registers heroes with a `switch (player.HeroName)` case
   - unsupported heroes return `null` from the factory and must fall back to the legacy enemy-wealth calculation
   - combat attributes may be refreshed outside `CalcEnemyWealth`; do not require `CalcEnemyWealth` to refresh self/enemy if the project already refreshes them elsewhere
   - `HasRobotCombatEvaluationData` indicates that a hero has registered evaluation data; it is not required to prove current-frame freshness
   - per-frame `LogMessage()` during combat-attribute refresh is accepted unless the user explicitly asks to remove it
-  - the new 1v1 path does not need to maintain `EnemyHP` unless a later consumer explicitly requires it
+  - `NumericalPet` does not need to maintain an `_enemyHp` cache; target HP terms should be read through `enemy` in `UpdateRobotCombatAttributesWithEnemy`
 - Ability data conventions:
-  - follow the current QiuZhang implementation as precedent for skill level and cooldown access
-  - current QiuZhang code reads skill level from `skill.Level`
-  - current QiuZhang code treats a skill as usable for combat evaluation when `skill.CurCdTime < 2`
+  - inspect current registered hero implementations as precedent for skill level and cooldown access
+  - current hero code reads skill level from `skill.Level`
+  - current hero code evaluates cooldown gates with `skill.CurCdTime` and the author-confirmed threshold
+  - if the document only says "short time" without a value, ask before coding
 - Damage-addition conventions:
   - `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are basic-attack-specific and skill-specific additions by project convention
   - do not raise a duplicate-multiplier concern against shared `ExtraDamageFactor` for these names unless the author explicitly describes them as global damage multipliers
 - Basic-attack frequency conventions:
-  - formulas that include normal/basic attacks should use an authored fixed `BaseAttackFrequency` parameter
+  - formulas that convert basic attacks through attack speed and time should use an authored fixed `BaseAttackFrequency` parameter
+  - formulas that use a confirmed fixed hit count do not need `BaseAttackFrequency` for that term
   - runtime attack speed is a coefficient
-  - attacks per second must be computed as `1 / (BaseAttackFrequency / AttackSpeed)`
+  - conceptually, attacks per second are `runtime attack-speed coefficient / BaseAttackFrequency`
+  - during code generation, inspect the current base first; in the current local base, protected `AttackSpeed` is already attacks per second (`attackSpeed / Self.RobotDPSConfig.HeroWeaponCD`), so do not divide by `BaseAttackFrequency` again inside a hero class
   - if a document includes basic attacks but omits `BaseAttackFrequency`, ask the author to provide it before code generation
 - Base combat-attribute values:
   - `RobotCombatAttributesBase` reads `TotalWeaponDamage` from `MODIFIER_PROPERTY_TOTAL_WEAPON_DAMAGE`
-  - its protected `AttackSpeed` field is the attack interval, computed as `1 / attackSpeed`
-  - if raw `attackSpeed` is `0`, the base uses `1` before reciprocal conversion
+  - inspect current local base before using `AttackSpeed`; in recent local code it may represent attacks per second (`attackSpeed / Self.RobotDPSConfig.HeroWeaponCD`) rather than attack interval
+  - if `AttackSpeed` is attacks per second, normal-attack DPS is `TotalWeaponDamage * AttackSpeed`; if it is attack interval, DPS is `TotalWeaponDamage / AttackSpeed`
+  - if raw `attackSpeed` is `0`, follow the base fallback value
+  - current base exposes `WeaponDamageAddition` and `SkillDamageAddition`; when confirmed Markdown or project convention requires basic-attack-specific or skill-specific damage additions, use these protected fields instead of re-querying modifier properties inside each hero class
   - `ExtraDamageFactor` is read from `MODIFIER_PROPERTY_EXTRA_DAMAGE_FACTOR`
 
 ## Shared Algorithm Invariants
@@ -87,7 +101,8 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
 - Shared combat-evaluation properties and delegate entry: `Assets/Scripts/Battle/View/Model_MOBA/ViewModel/Actor/Player.Robot.cs`
 - Common combat-attribute base and factory: `Assets/Scripts/Battle/Robot/Model_MOBA/RobotCombatAttributes/`
 - Hero-specific combat attributes: `Assets/Scripts/Battle/Robot/Model_MOBA/RobotCombatAttributes/RobotHero/`
-- Current example hero implementation: `Assets/Scripts/Battle/Robot/Model_MOBA/RobotCombatAttributes/RobotHero/QiuZhangRobotCombatAttributesBase.cs`
+- Confirmed hero combat-evaluation Markdown: `D:\work\Flamonmoba\CYTXDocuments\AIdocs`
+- Current example hero implementation lives under `Assets/Scripts/Battle/Robot/Model_MOBA/RobotCombatAttributes/RobotHero/`; inspect the current registered class name before copying structure
 - Shared 1v1 calculation: `Assets/Scripts/Battle/Robot/Model_MOBA/Modules/NumericalPet.cs`
 - MOBA target wealth call site: `Assets/Scripts/Battle/Robot/Model_MOBA/Actions/CalcWealthMalice/CalcEnemyWealthMalice.cs`
 - Extra damage factor is represented by `ModifierPropertyKeyName.MODIFIER_PROPERTY_EXTRA_DAMAGE_FACTOR`
