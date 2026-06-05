@@ -57,7 +57,7 @@ Skip any gate = stop. Ask the author.
 - Store FlamonMoba hero combat-evaluation Markdown under `D:\work\Flamonmoba\CYTXDocuments\AIdocs` unless the user gives another destination.
 - Before presenting the Markdown for discussion, perform non-semantic cleanup:
   - add a clear title and source note
-  - group content into stable sections such as base variables, short output, long output, skill/talent contribution, ignored effects, and open questions
+  - group content into stable sections such as base variables, short output, short defense expectation, long output, skill/talent contribution, ignored effects, and open questions
   - use Markdown headings, bullets, and formula blocks/inline code so variables and formulas are easy to scan
   - preserve the supplied descriptions, numeric values, formulas, and design intent; do not change meaning during formatting
   - if raw text contains placeholders such as `null`, keep the evidence but place it under an explicit ignored/unclear section instead of leaving it as an unexplained loose line
@@ -80,6 +80,8 @@ Review these fields and derivations:
 - `ShortPhysicalDamage`
 - `ShortSpellDamage`
 - `ShortTrueDamage`
+- `ShortExpectedDamageReduction`
+- `ShortExpectedShield`
 - `LongPhysicalDamagePerSecond`
 - `LongSpellDamagePerSecond`
 - Talent modifiers
@@ -149,11 +151,15 @@ When adding files under `Assets`, include Unity `.meta` files for the new file a
 | New file under `Assets` | Include the corresponding Unity `.meta` file |
 | Formula needs enemy HP, shield, resistance, or target buff stacks | Implement or update `UpdateRobotCombatAttributesWithEnemy(Player enemy)` |
 | Effect has no current 1v1 representation | Mark as not represented or ask author for intended mapping |
+| Skill/talent description contains pre-cast reduction, immunity, shield, temporary HP, or shield-like survival value but the document omits `ShortExpectedDamageReduction`/`ShortExpectedShield` | Ask the author to add explicit values before code generation |
 
 ## Code Mapping Rules
 
-- Required per-hero fields: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, `ShortPhysicalDamage`, `ShortSpellDamage`, `ShortTrueDamage`, `LongPhysicalDamagePerSecond`, `LongSpellDamagePerSecond`, `EffectiveCombatReach`.
+- Required per-hero fields: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, `ShortPhysicalDamage`, `ShortSpellDamage`, `ShortTrueDamage`, `ShortExpectedDamageReduction`, `ShortExpectedShield`, `LongPhysicalDamagePerSecond`, `LongSpellDamagePerSecond`, `EffectiveCombatReach`.
 - Use live battle properties for global multipliers and reductions, such as extra damage and damage-taken rate.
+- `ShortExpectedDamageReduction` is a pre-cast short-window defensive expectation, expressed as a `0-1` non-true-damage reduction factor. Set it only while the relevant skill is available or within the author-confirmed near-ready threshold. After the skill is cast, the value should naturally return to `0` because runtime reduction, resistance, or immunity is expected to be captured by live battle properties.
+- `ShortExpectedShield` is a pre-cast short-window expected shield or shield-like temporary survival value, expressed as flat HP. Set it only while the relevant skill is available or within the author-confirmed near-ready threshold. After the skill is cast, the value should naturally return to `0` because runtime `CurShieldVar` is expected to capture the real shield.
+- If a confirmed defensive effect applies only to specific damage types, decide during document review how it should be approximated by `ShortExpectedDamageReduction`; if there is no confirmed approximation, do not invent one in code.
 - `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are project-convention names for basic-attack-specific and skill-specific damage additions. Do not flag them as duplicate with shared `ExtraDamageFactor` unless the author explicitly says they are global damage multipliers.
 - For formulas that convert basic attacks through attack speed and time, require a fixed authored `BaseAttackFrequency` parameter and the runtime attack-speed coefficient during document review. If the confirmed formula uses a fixed hit count, do not require `BaseAttackFrequency` for that term. During code generation, inspect the current base field semantics first. In the current local project, protected `AttackSpeed` is already attacks per second (`attackSpeed / Self.RobotDPSConfig.HeroWeaponCD`), so normal-attack DPS uses `TotalWeaponDamage * AttackSpeed` and short windows multiply by the window duration.
 - If the current base exposes `WeaponDamageAddition` and `SkillDamageAddition`, use those protected fields when applying weapon-specific or skill-specific damage additions; do not re-query the modifier properties in each hero class.
@@ -161,6 +167,7 @@ When adding files under `Assets`, include Unity `.meta` files for the new file a
 - Cooldown gates use the project's current ability cooldown API; use the author-confirmed threshold from the Markdown, with current registered heroes only as precedent for API access.
 - Formula placeholders such as `lv1`, `lv2`, and `lv3` usually mean the current level of that skill unless the confirmed Markdown says otherwise.
 - Short true damage remains separate and does not receive physical/spell extra-damage multipliers unless the design explicitly changes that rule.
+- Short expected damage reduction applies only to short physical/spell actual damage in the shared algorithm; short true damage is not reduced by it unless the shared algorithm is explicitly changed later.
 
 ## Accepted Project Conventions
 

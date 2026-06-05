@@ -15,11 +15,12 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - store FlamonMoba hero combat-evaluation Markdown under `D:\work\Flamonmoba\CYTXDocuments\AIdocs` unless the user gives another destination
   - apply non-semantic formatting only: headings, stable section grouping, bullets, variable/code formatting, and formula readability cleanup
   - preserve supplied descriptions, numeric values, formulas, and design intent; do not silently rewrite combat logic while formatting
-  - recommended section order: title/source note, base variables, short output, long output, skill/talent contribution, ignored effects, open questions
+  - recommended section order: title/source note, base variables, short output, short defense expectation, long output, skill/talent contribution, ignored effects, open questions
   - place loose `null` placeholders or unexplained ignored effects under an explicit ignored/unclear section so they can be discussed
 - Ambiguity handling:
   - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by current registered hero examples or this checklist, ask the author for design intent before coding
   - do not invent a 1v1 mapping for new mechanics, support effects, healing, immunity, cleanse, aura, terrain, conditional control, resource loops, summons, or ally-dependent behavior unless the author confirms the mapping in Markdown
+  - if a hero has pre-cast damage reduction, immunity, shield, temporary HP, or shield-like defense that may be available or near-available, but the document omits `ShortExpectedDamageReduction` or `ShortExpectedShield`, ask the author to add the missing field before code generation
   - when in doubt, update the Markdown with the confirmed interpretation before implementation
 - Review-question style:
   - when multiple review issues exist, present them together in one structured review by default; switch to one-by-one questioning only if the author asks for it
@@ -31,11 +32,11 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - each hero class inherits `RobotCombatAttributesBase`
   - current registered hero classes use the `*RobotCombatAttributes` suffix, not `*RobotCombatAttributesBase`; copy the current local naming convention before adding a class or factory case
   - each hero class calls `base.UpdateRobotCombatAttributes()` before assigning hero-specific values
-  - each hero class assigns only that hero's combat-evaluation values: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, short damage, long DPS, true damage, and `EffectiveCombatReach`
+  - each hero class assigns only that hero's combat-evaluation values: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, short damage, short expected defense, long DPS, true damage, and `EffectiveCombatReach`
   - before generating code, inspect the current local `RobotCombatAttributesBase`, `IRobotCombatAttributes`, factory, and at least two registered hero classes; match their exact class naming, method signature, and refresh flow
   - current local structure uses `UpdateRobotCombatAttributes()` for target-independent values and `UpdateRobotCombatAttributesWithEnemy(Player enemy)` for values that need a specific enemy
   - do not introduce a target-parameter overload such as `UpdateRobotCombatAttributes(Player enemy = null)`; use the separate `UpdateRobotCombatAttributesWithEnemy` interface instead
-  - if a confirmed formula needs target-specific values such as enemy current HP, enemy shield, enemy resistance, or target buff stacks, implement or update `UpdateRobotCombatAttributesWithEnemy(Player enemy)` instead of dropping the term
+  - if a confirmed formula needs target-specific values such as enemy current HP, enemy shield, enemy resistance, target buff stacks, or target-dependent short expected defense values, implement or update `UpdateRobotCombatAttributesWithEnemy(Player enemy)` instead of dropping the term
   - `CalcEnemyWealth` must refresh target-specific attributes for both sides before comparing damage: self with enemy, and enemy with self
   - for a new hero, keep repository edits scoped to the hero class, the hero class `.meta`, the factory case, and optional confirmed Markdown under `CYTXDocuments/AIdocs`; do not edit existing hero classes for style or precedent cleanup unless the user requested a shared-base change
   - when adding any file or directory under `Assets`, include the corresponding Unity `.meta` file
@@ -67,6 +68,9 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - if raw `attackSpeed` is `0`, follow the base fallback value
   - current base exposes `WeaponDamageAddition` and `SkillDamageAddition`; when confirmed Markdown or project convention requires basic-attack-specific or skill-specific damage additions, use these protected fields instead of re-querying modifier properties inside each hero class
   - `ExtraDamageFactor` is read from `MODIFIER_PROPERTY_EXTRA_DAMAGE_FACTOR`
+  - base combat attributes default `ShortExpectedDamageReduction` and `ShortExpectedShield` to `0`
+  - `ShortExpectedDamageReduction` is a `0-1` pre-cast expected reduction for short physical/spell damage only; true damage is not reduced by this field
+  - `ShortExpectedShield` is a flat pre-cast expected HP/shield value added to short combat survival and short-kill thresholds
 
 ## Shared Algorithm Invariants
 
@@ -82,7 +86,8 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
 - Damage conversion:
   - physical and spell short/long damage multiply the attacker's `ExtraDamageFactor`
   - true damage does not multiply `ExtraDamageFactor`
-  - post-fight health uses current HP plus non-castle shield only
+  - `ShortExpectedDamageReduction` reduces only short physical/spell actual damage after resistance and damage-taken rates; true damage stays unreduced
+  - post-fight health and short-kill thresholds use current HP plus non-castle shield plus non-negative `ShortExpectedShield`
 - Kill branch:
   - if only self can kill within short damage, enemy is not strong and utility is `KillEnemyUtility`
   - if only enemy can kill within short damage, enemy is strong and utility is `0`
