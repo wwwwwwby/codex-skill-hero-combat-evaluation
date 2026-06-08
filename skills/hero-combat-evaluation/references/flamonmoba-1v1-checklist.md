@@ -34,9 +34,13 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - each hero class calls `base.UpdateRobotCombatAttributes()` before assigning hero-specific values
   - each hero class assigns only that hero's combat-evaluation values: `CombatRange`, `MobilityDistance`, `AverageMobility`, `ControlDuration`, short damage, short expected defense, long DPS, true damage, and `EffectiveCombatReach`
   - before generating code, inspect the current local `RobotCombatAttributesBase`, `IRobotCombatAttributes`, factory, and at least two registered hero classes; match their exact class naming, method signature, and refresh flow
+  - before adding local helper methods, inspect `RobotCombatAttributesBase` and reuse existing protected helpers instead of copying private versions into hero classes
   - current local structure uses `UpdateRobotCombatAttributes()` for target-independent values and `UpdateRobotCombatAttributesWithEnemy(Player enemy)` for values that need a specific enemy
   - do not introduce a target-parameter overload such as `UpdateRobotCombatAttributes(Player enemy = null)`; use the separate `UpdateRobotCombatAttributesWithEnemy` interface instead
   - if a confirmed formula needs target-specific values such as enemy current HP, enemy shield, enemy resistance, target buff stacks, or target-dependent short expected defense values, implement or update `UpdateRobotCombatAttributesWithEnemy(Player enemy)` instead of dropping the term
+  - do not compute target-specific formulas in `UpdateRobotCombatAttributes()` by passing `null`, `0`, or fake enemy values
+  - do not assign `0f` placeholders in `UpdateRobotCombatAttributes()` for target-specific damage fields that are owned by `UpdateRobotCombatAttributesWithEnemy`
+  - avoid wrapper methods such as `UpdateDamageAttributes(enemy)` when they hide whether a formula is target-independent or target-specific; place the formula directly in the matching refresh method unless a local abstraction clearly improves readability
   - `CalcEnemyWealth` must refresh target-specific attributes for both sides before comparing damage: self with enemy, and enemy with self
   - for a new hero, keep repository edits scoped to the hero class, the hero class `.meta`, the factory case, and optional confirmed Markdown under `CYTXDocuments/AIdocs`; do not edit existing hero classes for style or precedent cleanup unless the user requested a shared-base change
   - when adding any file or directory under `Assets`, include the corresponding Unity `.meta` file
@@ -48,8 +52,11 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - `NumericalPet` does not need to maintain an `_enemyHp` cache; target HP terms should be read through `enemy` in `UpdateRobotCombatAttributesWithEnemy`
 - Ability data conventions:
   - inspect current registered hero implementations as precedent for skill level and cooldown access
-  - current hero code reads skill level from `skill.Level`
-  - current hero code evaluates cooldown gates with `skill.CurCdTime` and the author-confirmed threshold
+  - current base helper `GetAbilityLevel(ability)` reads skill level with a `1` fallback; prefer it over local null checks
+  - current base helper `IsAbilityReadyWithin(ability, threshold)` evaluates cooldown gates; prefer it over repeated `ability != null && ability.CurCdTime ...` expressions
+  - current base helper `IsChargeAbilityReadyWithin(ability, threshold)` handles bullet abilities that may become ready through current or near-ready charges
+  - current base helpers `GetSkillBullet(ability)` and `GetCurrentSkillBullet(ability, maxBullet)` cover ordinary and max-count bullet reads; do not add duplicate local bullet helpers unless the mechanic is genuinely special
+  - if a hero uses runtime skill replacement, stance changes, or multi-form skill slots, prefer local precedent such as `Self.GetAbilityBySlot(slot)` instead of long `AbilityType` fallback lists
   - if the document only says "short time" without a value, ask before coding
 - Damage-addition conventions:
   - `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are basic-attack-specific and skill-specific additions by project convention
@@ -68,6 +75,9 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - if raw `attackSpeed` is `0`, follow the base fallback value
   - current base exposes `WeaponDamageAddition` and `SkillDamageAddition`; when confirmed Markdown or project convention requires basic-attack-specific or skill-specific damage additions, use these protected fields instead of re-querying modifier properties inside each hero class
   - `ExtraDamageFactor` is read from `MODIFIER_PROPERTY_EXTRA_DAMAGE_FACTOR`
+  - current base exposes shared helpers: `HasTalent`, `IsSuperPowerReady`, `GetAbilityLevel`, `IsAbilityReadyWithin`, `IsChargeAbilityReadyWithin`, `GetSkillBullet`, and `GetCurrentSkillBullet`
+  - do not duplicate base helpers inside hero classes; if a new generic helper is likely to be reused, add it to the base instead
+  - avoid private `static` helper methods in hero classes; pure immutable lookup tables such as `private static readonly float[]` are acceptable
   - base combat attributes default `ShortExpectedDamageReduction` and `ShortExpectedShield` to `0`
   - `ShortExpectedDamageReduction` is a `0-1` pre-cast expected reduction for short physical/spell damage only; true damage is not reduced by this field
   - `ShortExpectedShield` is a flat pre-cast expected HP/shield value added to short combat survival and short-kill thresholds

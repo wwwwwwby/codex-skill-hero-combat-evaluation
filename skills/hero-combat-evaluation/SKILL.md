@@ -121,6 +121,10 @@ Required code pattern:
 - The class calls `base.UpdateRobotCombatAttributes()` first.
 - Use the current method signatures exactly. In the current local project, `UpdateRobotCombatAttributes()` refreshes attributes that do not need a specific enemy, and `UpdateRobotCombatAttributesWithEnemy(Player enemy)` refreshes attributes that depend on the target enemy.
 - Do not add an overload such as `UpdateRobotCombatAttributes(Player enemy = null)`. Put target-specific formulas in `UpdateRobotCombatAttributesWithEnemy`.
+- Do not compute target-specific formulas in `UpdateRobotCombatAttributes()` by passing `null`, `0`, or placeholder enemy values. Do not assign `0f` placeholders for target-specific damage fields in the no-argument refresh; let the target-specific refresh own those fields.
+- Reuse protected helpers already available on `RobotCombatAttributesBase` before adding local helper methods. Current shared helpers include `HasTalent`, `IsSuperPowerReady`, `GetAbilityLevel`, `IsAbilityReadyWithin`, `IsChargeAbilityReadyWithin`, `GetSkillBullet`, and `GetCurrentSkillBullet`.
+- Do not duplicate those helpers inside hero classes. If a new helper would be useful for more than one hero, add it to the base class instead of copying a private implementation into a hero class.
+- Avoid private `static` utility methods in hero classes. Pure immutable lookup tables such as `private static readonly float[]` are acceptable, but formula helpers should normally be instance methods or base-class helpers.
 - The class assigns only that hero's combat-evaluation attributes.
 - Register the class in `RobotCombatAttributesBaseFactory` using the current `switch (player.HeroName)` pattern:
 
@@ -150,8 +154,11 @@ When adding files under `Assets`, include Unity `.meta` files for the new file a
 | New hero | Add one `*RobotCombatAttributes` subclass and one factory `case` |
 | New file under `Assets` | Include the corresponding Unity `.meta` file |
 | Formula needs enemy HP, shield, resistance, or target buff stacks | Implement or update `UpdateRobotCombatAttributesWithEnemy(Player enemy)` |
+| Target-specific field would be unknown in the no-argument refresh | Leave it to `UpdateRobotCombatAttributesWithEnemy`; do not assign a `0f` placeholder in `UpdateRobotCombatAttributes()` |
 | Effect has no current 1v1 representation | Mark as not represented or ask author for intended mapping |
 | Skill/talent description contains pre-cast reduction, immunity, shield, temporary HP, or shield-like survival value but the document omits `ShortExpectedDamageReduction`/`ShortExpectedShield` | Ask the author to add explicit values before code generation |
+| Hero needs a helper that matches an existing base helper | Use the base helper; do not copy a private/static version into the hero class |
+| Hero has replacement/multi-form skills where `AbilityType` names are unstable | Prefer the current runtime slot API such as `Self.GetAbilityBySlot(...)` when that matches local precedent |
 
 ## Code Mapping Rules
 
@@ -164,6 +171,11 @@ When adding files under `Assets`, include Unity `.meta` files for the new file a
 - For formulas that convert basic attacks through attack speed and time, require a fixed authored `BaseAttackFrequency` parameter and the runtime attack-speed coefficient during document review. If the confirmed formula uses a fixed hit count, do not require `BaseAttackFrequency` for that term. During code generation, inspect the current base field semantics first. In the current local project, protected `AttackSpeed` is already attacks per second (`attackSpeed / Self.RobotDPSConfig.HeroWeaponCD`), so normal-attack DPS uses `TotalWeaponDamage * AttackSpeed` and short windows multiply by the window duration.
 - If the current base exposes `WeaponDamageAddition` and `SkillDamageAddition`, use those protected fields when applying weapon-specific or skill-specific damage additions; do not re-query the modifier properties in each hero class.
 - Target-specific formula inputs, such as enemy current HP or target buff stack count, belong in `UpdateRobotCombatAttributesWithEnemy(Player enemy)`. Keep the no-argument update as the target-independent baseline.
+- Target-specific damage fields should be assigned only in `UpdateRobotCombatAttributesWithEnemy`. Avoid wrapper methods such as `UpdateDamageAttributes(enemy)` when the split between target-independent and target-specific formulas becomes less obvious.
+- Never call a target-specific formula from the no-argument update with `null`, `0`, or a fake enemy value. The no-argument update runs outside the specific enemy comparison loop and must not overwrite target-specific results.
+- Before adding local helper methods, inspect `RobotCombatAttributesBase` and use the existing protected helpers. Current base helpers cover talent checks, superpower readiness, ability level fallback, cooldown windows, charge readiness, and bullet count.
+- Keep hero-local helpers narrow and formula-specific. Do not add private copies of base helpers, and do not add private `static` helper methods for formula decomposition; pure immutable lookup arrays are the allowed static exception.
+- For heroes with runtime skill replacement, stance changes, or multi-form skill slots, use the local precedent API such as `Self.GetAbilityBySlot(slot)` instead of hand-writing large `AbilityType` fallback lists, unless the confirmed implementation mechanics require explicit ability-type lookup.
 - Cooldown gates use the project's current ability cooldown API; use the author-confirmed threshold from the Markdown, with current registered heroes only as precedent for API access.
 - Formula placeholders such as `lv1`, `lv2`, and `lv3` usually mean the current level of that skill unless the confirmed Markdown says otherwise.
 - Short true damage remains separate and does not receive physical/spell extra-damage multipliers unless the design explicitly changes that rule.
