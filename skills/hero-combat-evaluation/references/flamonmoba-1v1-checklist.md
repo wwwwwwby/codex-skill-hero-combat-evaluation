@@ -21,6 +21,7 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - if the document contains unclear combat-evaluation value derivations, unclear ignored effects, or mechanics not covered by current registered hero examples or this checklist, ask the author for design intent before coding
   - do not invent a 1v1 mapping for new mechanics, support effects, healing, immunity, cleanse, aura, terrain, conditional control, resource loops, summons, or ally-dependent behavior unless the author confirms the mapping in Markdown
   - if a hero has pre-cast damage reduction, immunity, shield, temporary HP, or shield-like defense that may be available or near-available, but the document omits `ShortExpectedDamageReduction` or `ShortExpectedShield`, ask the author to add the missing field before code generation
+  - if a hero has replacement skills, multi-stage casts, stance/form changes, or skill transformation mechanics, ask the author whether the formula should read the current runtime ability from a skill slot and confirm the slot before coding: lower/bottom slot is `Self.GetAbilityBySlot(2)`, middle slot is `Self.GetAbilityBySlot(1)`, upper/top slot is `Self.GetAbilityBySlot(0)`
   - when in doubt, update the Markdown with the confirmed interpretation before implementation
 - Review-question style:
   - when multiple review issues exist, present them together in one structured review by default; switch to one-by-one questioning only if the author asks for it
@@ -56,7 +57,8 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - current base helper `IsAbilityReadyWithin(ability, threshold)` evaluates cooldown gates; prefer it over repeated `ability != null && ability.CurCdTime ...` expressions
   - current base helper `IsChargeAbilityReadyWithin(ability, threshold)` handles bullet abilities that may become ready through current or near-ready charges
   - current base helpers `GetSkillBullet(ability)` and `GetCurrentSkillBullet(ability, maxBullet)` cover ordinary and max-count bullet reads; do not add duplicate local bullet helpers unless the mechanic is genuinely special
-  - if a hero uses runtime skill replacement, stance changes, or multi-form skill slots, prefer local precedent such as `Self.GetAbilityBySlot(slot)` instead of long `AbilityType` fallback lists
+  - if a hero uses runtime skill replacement, multi-stage casts, stance/form changes, or skill transformation mechanics, use `Self.GetAbilityBySlot(slot)` only after the author confirms the relevant slot; the confirmed slot ability should be used for level, cooldown/readiness, bullet checks, and formulas that depend on the currently replaced skill
+  - for confirmed slot-replaced skills, do not use fixed `AbilityType` lookup or long `AbilityType` fallback lists; if the slot is not confirmed, stop at Markdown review and ask
   - if the document only says "short time" without a value, ask before coding
 - Damage-addition conventions:
   - `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are basic-attack-specific and skill-specific additions by project convention
