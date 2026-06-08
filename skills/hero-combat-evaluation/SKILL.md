@@ -100,6 +100,8 @@ For replacement skills, multi-stage casts, stance/form changes, or any mechanic 
 - Middle skill slot: `Self.GetAbilityBySlot(1)`
 - Upper/top skill slot: `Self.GetAbilityBySlot(0)`
 
+Before asking, inspect local evidence when available: existing hero combat-attribute code, behavior-tree assets, ability constants with paired names such as `_close` or `_1`/`_2`, and explicit behavior-tree checks such as `Check Slot With Skill Ability Type` / `Int32SlotIndex`. If that evidence confirms the runtime slot, record the confirmation in the Markdown review and implement from the slot ability. If it only suggests a replacement but does not prove the slot, ask the author to confirm the slot.
+
 Once confirmed, use the slot ability for level and cooldown/readiness calculations, then pass that `Ability` through base helpers such as `GetAbilityLevel(...)` and `IsAbilityReadyWithin(...)`. Do not use a fixed `AbilityType` or a hand-written fallback list for that skill unless the author or current local implementation mechanics confirm that the skill is not slot-replaced.
 
 When multiple issues are found, prefer one holistic review response instead of drip-feeding questions one by one, unless the author explicitly asks for step-by-step questioning. Do not output a bare checklist. Each issue must include the questionable mapping, your design concern or defect hypothesis, your proposed interpretation, and the exact confirmation needed from the author.
@@ -165,7 +167,7 @@ When adding files under `Assets`, include Unity `.meta` files for the new file a
 | Effect has no current 1v1 representation | Mark as not represented or ask author for intended mapping |
 | Skill/talent description contains pre-cast reduction, immunity, shield, temporary HP, or shield-like survival value but the document omits `ShortExpectedDamageReduction`/`ShortExpectedShield` | Ask the author to add explicit values before code generation |
 | Hero needs a helper that matches an existing base helper | Use the base helper; do not copy a private/static version into the hero class |
-| Hero has replacement, multi-stage cast, stance/form change, or skill transformation mechanics | Ask the author whether the skill is runtime slot-replaced and confirm the slot: lower `2`, middle `1`, upper `0`; if confirmed, use `Self.GetAbilityBySlot(slot)` for level and readiness |
+| Hero has replacement, multi-stage cast, stance/form change, or skill transformation mechanics | Inspect local slot evidence first; if not conclusive, ask the author whether the skill is runtime slot-replaced and confirm the slot: lower `2`, middle `1`, upper `0`; if confirmed, use `Self.GetAbilityBySlot(slot)` for level and readiness |
 
 ## Code Mapping Rules
 
@@ -183,6 +185,7 @@ When adding files under `Assets`, include Unity `.meta` files for the new file a
 - Before adding local helper methods, inspect `RobotCombatAttributesBase` and use the existing protected helpers. Current base helpers cover talent checks, superpower readiness, ability level fallback, cooldown windows, charge readiness, and bullet count.
 - Keep hero-local helpers narrow and formula-specific. Do not add private copies of base helpers, and do not add private `static` helper methods for formula decomposition; pure immutable lookup arrays are the allowed static exception.
 - For heroes with runtime skill replacement, multi-stage casts, stance/form changes, or skill transformations, confirm the slot with the author before coding and then use `Self.GetAbilityBySlot(slot)` for the current runtime ability. Slot mapping is lower/bottom `2`, middle `1`, upper/top `0`. Use that slot ability for `GetAbilityLevel`, cooldown readiness, bullet checks, and any formula that depends on the currently replaced skill.
+- Local evidence can confirm the slot when behavior-tree assets or existing code explicitly expose it, for example `Self.GetAbilityBySlot(slot)` or `Check Slot With Skill Ability Type` with `Int32SlotIndex`. Paired ability names such as `_close`, `_1`, or `_2` are only replacement hints unless paired with an explicit slot.
 - Do not use fixed `AbilityType` lookup or a hand-written fallback ability-type list for a confirmed slot-replaced skill. If the document hints at multi-stage or replacement behavior but the slot is not confirmed, stop at Markdown review and ask.
 - Cooldown gates use the project's current ability cooldown API; use the author-confirmed threshold from the Markdown, with current registered heroes only as precedent for API access.
 - Formula placeholders such as `lv1`, `lv2`, and `lv3` usually mean the current level of that skill unless the confirmed Markdown says otherwise.
