@@ -63,7 +63,7 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - if the document only says "short time" without a value, ask before coding
 - Damage-addition conventions:
   - AI combat-evaluation code must not read or use `MODIFIER_PROPERTY_WEAPON_DAMAGE_ADDITIONAL_FACTOR` / `MODIFIER_PROPERTY_ABILITY_TYPE_INJURY_DAMAGE_ADDITIONAL_FACTOR`
-  - if a hero needs basic-attack-specific or skill-specific damage additions, require fixed constants in the confirmed Markdown and use those constants explicitly
+  - if a hero needs basic-attack-specific or skill-specific damage additions, require fixed constants in the confirmed Markdown and write the numeric factors directly in the formula, such as `TotalWeaponDamage * 1.2f` in code or `攻击力 * 1.2` in Markdown; do not add placeholder fields or reserved variables for later replacement
 - Basic-attack frequency conventions:
   - formulas that convert basic attacks through attack speed and time should use an authored fixed `BaseAttackFrequency` parameter
   - formulas that use a confirmed fixed hit count do not need `BaseAttackFrequency` for that term
@@ -80,7 +80,9 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - `ExtraDamageFactor` is read from `MODIFIER_PROPERTY_EXTRA_DAMAGE_FACTOR`
   - current base exposes shared helpers: `HasTalent`, `IsSuperPowerReady`, `GetAbilityLevel`, `IsAbilityReadyWithin`, `IsChargeAbilityReadyWithin`, `GetSkillBullet`, and `GetCurrentSkillBullet`
   - do not duplicate base helpers inside hero classes; if a new generic helper is likely to be reused, add it to the base instead
-  - avoid private `static` helper methods in hero classes; pure immutable lookup tables such as `private static readonly float[]` are acceptable
+  - use shared AI math helpers from `RobotUtils` before calling `Mathf` in combat-evaluation code; current project convention covers `RobotUtils.Max/Min/Clamp/Clamp01/Lerp/Epsilon`
+  - avoid private `static` helper methods and static lookup arrays in hero classes; hero-local lookup tables should be instance fields such as `private readonly float[]`, not `private static readonly float[]`
+  - inline tiny one-formula helpers when that keeps `UpdateRobotCombatAttributes` / `UpdateRobotCombatAttributesWithEnemy` readable; move genuinely reusable helpers to the base/shared layer instead of copying them into hero classes
   - base combat attributes default `ShortExpectedDamageReduction` and `ShortExpectedShield` to `0`
   - `ShortExpectedDamageReduction` is a `0-1` pre-cast expected reduction for short physical/spell damage only; true damage is not reduced by this field
   - `ShortExpectedShield` is a flat pre-cast expected HP/shield value added to short combat survival and short-kill thresholds
