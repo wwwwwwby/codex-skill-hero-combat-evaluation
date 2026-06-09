@@ -62,8 +62,8 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - for confirmed slot-replaced skills, do not use fixed `AbilityType` lookup or long `AbilityType` fallback lists; if the slot is not confirmed, stop at Markdown review and ask
   - if the document only says "short time" without a value, ask before coding
 - Damage-addition conventions:
-  - `WeaponDamageAddition` and `SkillDamageAddition` in authored hero documents are basic-attack-specific and skill-specific additions by project convention
-  - do not raise a duplicate-multiplier concern against shared `ExtraDamageFactor` for these names unless the author explicitly describes them as global damage multipliers
+  - AI combat-evaluation code must not read or use `MODIFIER_PROPERTY_WEAPON_DAMAGE_ADDITIONAL_FACTOR` / `MODIFIER_PROPERTY_ABILITY_TYPE_INJURY_DAMAGE_ADDITIONAL_FACTOR`
+  - if a hero needs basic-attack-specific or skill-specific damage additions, require fixed constants in the confirmed Markdown and use those constants explicitly
 - Basic-attack frequency conventions:
   - formulas that convert basic attacks through attack speed and time should use an authored fixed `BaseAttackFrequency` parameter
   - formulas that use a confirmed fixed hit count do not need `BaseAttackFrequency` for that term
@@ -76,7 +76,7 @@ Use this bundled reference when reviewing or implementing hero combat evaluation
   - inspect current local base before using `AttackSpeed`; in recent local code it may represent attacks per second (`attackSpeed / Self.RobotDPSConfig.HeroWeaponCD`) rather than attack interval
   - if `AttackSpeed` is attacks per second, normal-attack DPS is `TotalWeaponDamage * AttackSpeed`; if it is attack interval, DPS is `TotalWeaponDamage / AttackSpeed`
   - if raw `attackSpeed` is `0`, follow the base fallback value
-  - current base exposes `WeaponDamageAddition` and `SkillDamageAddition`; when confirmed Markdown or project convention requires basic-attack-specific or skill-specific damage additions, use these protected fields instead of re-querying modifier properties inside each hero class
+  - do not introduce shared `WeaponDamageAddition` / `SkillDamageAddition` fields or re-query their modifier properties inside hero classes
   - `ExtraDamageFactor` is read from `MODIFIER_PROPERTY_EXTRA_DAMAGE_FACTOR`
   - current base exposes shared helpers: `HasTalent`, `IsSuperPowerReady`, `GetAbilityLevel`, `IsAbilityReadyWithin`, `IsChargeAbilityReadyWithin`, `GetSkillBullet`, and `GetCurrentSkillBullet`
   - do not duplicate base helpers inside hero classes; if a new generic helper is likely to be reused, add it to the base instead
